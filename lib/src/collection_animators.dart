@@ -24,25 +24,34 @@ class CollectionSlideTransition extends StatefulWidget {
   /// The toggle to make the animation repeating or non-repeating.
   final bool repeat;
 
+  /// The animation duration (in seconds).
+  final int? duration;
+
   /// Creates transiton widget.
   ///
   /// [children] is requied and must not be null.
   /// [end] property has default displacement of -1.0 in vertical direction.
-  CollectionSlideTransition({
-    required this.children,
-    this.end = const Offset(0.0, -1.0),
-    this.repeat = true,
-  }) : assert(children != null);
+  CollectionSlideTransition(
+      {required this.children,
+      this.end = const Offset(0.0, -1.0),
+      this.repeat = true,
+      this.duration})
+      : assert(children != null);
 
   @override
   _CollectionSlideTransitionState createState() =>
-      new _CollectionSlideTransitionState();
+      new _CollectionSlideTransitionState(duration: duration);
 }
 
 class _CollectionSlideTransitionState extends State<CollectionSlideTransition>
     with SingleTickerProviderStateMixin {
   AnimationController? _controller;
   List<_WidgetAnimations<Offset>> _widgets = [];
+  final int? _duration;
+
+  _CollectionSlideTransitionState({int? duration})
+      : _duration = duration,
+        super();
 
   @override
   void initState() {
@@ -50,7 +59,8 @@ class _CollectionSlideTransitionState extends State<CollectionSlideTransition>
 
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: (widget.children.length * 0.25).round()),
+      duration: Duration(
+          seconds: _duration ?? (widget.children.length * 0.25).round()),
     );
 
     _widgets = _WidgetAnimations.createList<Offset>(
@@ -122,25 +132,34 @@ class CollectionScaleTransition extends StatefulWidget {
   /// The toggle to make the animation repeating or non-repeating.
   final bool repeat;
 
+  /// The animation duration (in seconds).
+  final int? duration;
+
   /// Creates transiton widget.
   ///
   /// [children] is requied and must not be null.
   /// [end] property has default value of 2.0.
-  CollectionScaleTransition({
-    required this.children,
-    this.end = 2.0,
-    this.repeat = true,
-  }) : assert(children != null);
+  CollectionScaleTransition(
+      {required this.children,
+      this.end = 2.0,
+      this.repeat = true,
+      this.duration})
+      : assert(children != null);
 
   @override
   _CollectionScaleTransitionState createState() =>
-      new _CollectionScaleTransitionState();
+      new _CollectionScaleTransitionState(duration: duration);
 }
 
 class _CollectionScaleTransitionState extends State<CollectionScaleTransition>
     with SingleTickerProviderStateMixin {
   AnimationController? _controller;
   List<_WidgetAnimations<double>> _widgets = [];
+  final int? _duration;
+
+  _CollectionScaleTransitionState({int? duration})
+      : _duration = duration,
+        super();
 
   @override
   void initState() {
@@ -148,7 +167,8 @@ class _CollectionScaleTransitionState extends State<CollectionScaleTransition>
 
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: (widget.children.length * 0.25).round()),
+      duration: Duration(
+          seconds: _duration ?? (widget.children.length * 0.25).round()),
     );
 
     _widgets = _WidgetAnimations.createList<double>(
@@ -215,7 +235,7 @@ class _WidgetAnimations<T> {
     final animations = <_WidgetAnimations<S>>[];
 
     var start = 0.0;
-    final duration = 1.0 / (widgets.length * 2);
+    final duration = 1.0 / (widgets.length);
     widgets.forEach((childWidget) {
       final animation = Tween<S>(
         begin: begin,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:progress_indicators/src/collection_animators.dart';
 
+enum FadingTextDirection { forward, reverse, bidirectional }
+
 /// Adds fading effect on each character in the [text] provided to it.
 ///
 /// The animation is repeated continuously so this widget is ideal
@@ -14,14 +16,28 @@ import 'package:progress_indicators/src/collection_animators.dart';
 class FadingText extends StatefulWidget {
   /// Text to animate
   final String text;
+
   /// Custom text style. If not specified, uses the default style.
   final TextStyle? style;
+
+  /// Custom text align. If not specified uses the default alignment.
+  final TextAlign? textAlign;
+
+  /// The direction for text animation.
+  final FadingTextDirection direction;
+
+  /// The animation duration (in seconds).
+  final int duration;
 
   /// Creates a fading continuous animation.
   ///
   /// The provided [text] is continuously animated using [FadeTransition].
   /// [text] must not be null.
-  FadingText(this.text, {this.style}) : assert(text != null);
+  FadingText(this.text,
+      {this.style,
+      this.textAlign,
+      this.direction = FadingTextDirection.bidirectional,
+      this.duration = 2});
 
   @override
   _FadingTextState createState() => new _FadingTextState();
@@ -37,10 +53,10 @@ class _FadingTextState extends State<FadingText> with TickerProviderStateMixin {
 
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 2),
+      duration: Duration(seconds: widget.duration),
     );
 
-    var start = 0.2;
+    var start = 0.0;
     final duration = 0.6 / widget.text.length;
     widget.text.runes.forEach((int rune) {
       final character = new String.fromCharCode(rune);
@@ -57,14 +73,37 @@ class _FadingTextState extends State<FadingText> with TickerProviderStateMixin {
       start += duration;
     });
 
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _controller.reverse();
-      } else if (status == AnimationStatus.dismissed) {
-        _controller.forward();
-      }
-    });
-    _controller.forward();
+    if (widget.direction == FadingTextDirection.reverse)
+      _controller.addStatusListener((status) {
+        _animate(status);
+        /*if (status == AnimationStatus.completed) {
+          _controller.reverse();
+        } else if (status == AnimationStatus.dismissed) {
+          _controller.forward();
+        }*/
+      });
+    _animate();
+  }
+
+  _animate([AnimationStatus? status]) {
+    switch (widget.direction) {
+      case FadingTextDirection.forward:
+        // if (status == null)
+        _controller.repeat();
+        break;
+      case FadingTextDirection.reverse:
+        if (status == null || status == AnimationStatus.dismissed)
+          _controller.reverse(from: _controller.upperBound);
+        /*_controller.repeat(min: _controller.upperBound, max: _controller.lowerBound);*/
+        break;
+      case FadingTextDirection.bidirectional:
+        _controller.repeat(reverse: true);
+        // if (status == AnimationStatus.completed)
+        //   _controller.reverse();
+        // else if (status == null || status == AnimationStatus.dismissed)
+        //   _controller.forward();
+        break;
+    }
   }
 
   @override
@@ -74,9 +113,9 @@ class _FadingTextState extends State<FadingText> with TickerProviderStateMixin {
       children: _characters
           .map(
             (entry) => FadeTransition(
-                  opacity: entry.value as Animation<double>,
-                  child: Text(entry.key, style: widget.style),
-                ),
+              opacity: entry.value as Animation<double>,
+              child: Text(entry.key, style: widget.style, textAlign: widget.textAlign),
+            ),
           )
           .toList(),
     );
@@ -102,23 +141,25 @@ class JumpingText extends StatelessWidget {
   final Offset begin = Offset(0.0, 0.0);
   final Offset end;
   final TextStyle? style;
+  final int? duration;
 
   /// Creates a jumping text widget.
   ///
   /// Each character in [text] is animated to look like a jumping effect.
   /// The [end] is the target [Offset] for each character.
-  JumpingText(this.text, {this.end = const Offset(0.0, -0.5), this.style});
+  JumpingText(this.text,
+      {this.end = const Offset(0.0, -0.5), this.style, this.duration});
 
   @override
   Widget build(BuildContext context) {
     return CollectionSlideTransition(
-      end: end,
-      children: text.runes
-          .map(
-            (rune) => Text(String.fromCharCode(rune), style: style),
-          )
-          .toList(),
-    );
+        end: end,
+        children: text.runes
+            .map(
+              (rune) => Text(String.fromCharCode(rune), style: style),
+            )
+            .toList(),
+        duration: duration);
   }
 }
 
@@ -137,21 +178,22 @@ class ScalingText extends StatelessWidget {
   final double begin = 1.0;
   final double end;
   final TextStyle? style;
+  final int? duration;
 
   /// Creates a jumping text widget.
   ///
   /// Each character in [text] is scaled to [end].
-  ScalingText(this.text, {this.end = 2.0, this.style});
+  ScalingText(this.text, {this.end = 2.0, this.style, this.duration});
 
   @override
   Widget build(BuildContext context) {
     return CollectionScaleTransition(
-      end: end,
-      children: text.runes
-          .map(
-            (rune) => Text(String.fromCharCode(rune), style: style),
-          )
-          .toList(),
-    );
+        end: end,
+        children: text.runes
+            .map(
+              (rune) => Text(String.fromCharCode(rune), style: style),
+            )
+            .toList(),
+        duration: duration);
   }
 }
